@@ -44,8 +44,8 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
 });
 
 exports.createBookingCheckout = catchAsync(async (req, res, next) => {
-  console.log('🔁 Redirected to / with query:', req.query);
-  console.log('👤 User from cookie/session:', req.user);
+  // console.log('🔁 Redirected to / with query:', req.query);
+  // console.log('👤 User from cookie/session:', req.user);
 
   const { tour, user, price } = req.query;
   if (!tour || !user || !price) return next();

@@ -11,7 +11,7 @@ export async function bookTour(tourId) {
 
     const { paymentSessionId } = data.session;
 
-    const cashfree = new window.Cashfree({ mode: 'sandbox' });
+    const cashfree = new window.Cashfree({ mode: 'production' });
 
     // ✅ Use checkout with redirectTarget: '_self' to redirect to payment page
     await cashfree.checkout({
