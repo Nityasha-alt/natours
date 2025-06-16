@@ -50,6 +50,7 @@ app.use(
       connectSrc: [
         "'self'",
         'https://*.mapbox.com',
+        'https://natours-rkbr.onrender.com',
         'ws:',
         'http://localhost:*',
         'https://sdk.cashfree.com',
