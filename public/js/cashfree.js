@@ -1,16 +1,16 @@
 /* eslint-disable */
 import { showAlert } from './alerts';
 
-// const params = new URLSearchParams(window.location.search);
-// const alertMessage = params.get('alert');
+const params = new URLSearchParams(window.location.search);
+const alertMessage = params.get('alert');
 
-// if (alertMessage === 'payment') {
-//   showAlert('success', 'Payment successful!');
+if (alertMessage === 'payment') {
+  showAlert('success', 'Payment successful!');
 
-//   // ✅ Clean the URL so the alert doesn't reappear on reload
-//   const urlWithoutQuery = window.location.origin + window.location.pathname;
-//   window.history.replaceState(null, '', urlWithoutQuery);
-// }
+  // ✅ Clean the URL so the alert doesn't reappear on reload
+  const urlWithoutQuery = window.location.origin + window.location.pathname;
+  window.history.replaceState(null, '', urlWithoutQuery);
+}
 
 export async function bookTour(tourId) {
   try {
