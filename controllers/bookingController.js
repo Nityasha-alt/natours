@@ -31,7 +31,7 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
     order_meta: {
       // `${req.protocol}://${req.get('host')}/my-tours`,
       // return_url: `${req.protocol}://${req.get('host')}/?tour=${tourId}&user=${userId}&price=${price}&alert=payment`,
-      return_url: `${req.protocol}://${req.get('host')}/my-tours`,
+      return_url: `${req.protocol}://${req.get('host')}/my-tours?alert=payment`,
       tour_id: tour.id,
     },
   };
@@ -67,10 +67,10 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
 // });
 
 const createBookingCheckout = async (order, customerEmail) => {
+  console.log('✅ CREATE BOOKING TRIGGERED via webhook:', order.order_id);
   const tourId = order.order_meta.tour_id;
   const user = (await User.findOne({ email: customerEmail })).id;
   const price = order.order_amount;
-
   await Booking.create({ tour: tourId, user, price });
 };
 
