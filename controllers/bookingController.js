@@ -96,9 +96,15 @@ exports.webhookCheckout = async (req, res) => {
 
   if (eventData.event === 'PAYMENT_SUCCESS_WEBHOOK') {
     const { order } = eventData.payload;
-    const customerEmail = order.customer_details.customer_email;
 
-    await createBookingCheckout(order, customerEmail);
+    if (order.order_status === 'PAID') {
+      const customerEmail = order.customer_details.customer_email;
+      await createBookingCheckout(order, customerEmail);
+    } else {
+      console.log(
+        `❌ Order ${order.order_id} has status ${order.order_status}, not creating booking.`,
+      );
+    }
   }
 
   res.status(200).json({ received: true });
