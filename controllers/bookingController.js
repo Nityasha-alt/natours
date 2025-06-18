@@ -75,39 +75,51 @@ const createBookingCheckout = async (order, customerEmail) => {
 };
 
 exports.webhookCheckout = async (req, res) => {
-  const signature = req.headers['x-webhook-signature'];
-  const timestamp = req.headers['x-webhook-timestamp'];
-  const secret = process.env.CASHFREE_CLIENT_SECRET;
+  console.log('🚨 Webhook endpoint HIT');
 
-  const rawBody = req.body.toString('utf8');
-  const signedPayload = timestamp + rawBody;
+  try {
+    const signature = req.headers['x-webhook-signature'];
+    const timestamp = req.headers['x-webhook-timestamp'];
+    const secret = process.env.CASHFREE_CLIENT_SECRET;
 
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('base64');
+    const rawBody = req.body.toString('utf8'); // <- Make sure req.body is a Buffer
+    console.log('🟡 Raw Body:', rawBody);
 
-  if (signature !== expectedSignature) {
-    console.log('❌ Invalid signature.');
-    return res.status(400).send('Signature mismatch');
-  }
+    const signedPayload = timestamp + rawBody;
 
-  const eventData = JSON.parse(rawBody);
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(signedPayload)
+      .digest('base64');
 
-  if (eventData.event === 'PAYMENT_SUCCESS_WEBHOOK') {
-    const { order } = eventData.payload;
+    if (signature !== expectedSignature) {
+      console.log('❌ Signature mismatch');
+      return res.status(400).send('Signature mismatch');
+    }
 
-    if (order.order_status === 'PAID') {
+    const eventData = JSON.parse(rawBody);
+    console.log('✅ Verified Webhook Data:', eventData);
+
+    if (
+      eventData.event === 'PAYMENT_SUCCESS_WEBHOOK' &&
+      eventData.payload?.order?.order_status === 'PAID'
+    ) {
+      const { order } = eventData.payload;
       const customerEmail = order.customer_details.customer_email;
+
       await createBookingCheckout(order, customerEmail);
     } else {
       console.log(
-        `❌ Order ${order.order_id} has status ${order.order_status}, not creating booking.`,
+        '⚠️ Order status not PAID:',
+        eventData.payload?.order?.order_status,
       );
     }
-  }
 
-  res.status(200).json({ received: true });
+    res.status(200).json({ received: true });
+  } catch (err) {
+    console.error('Webhook error:', err.message);
+    res.status(500).send('Internal Server Error');
+  }
 };
 
 exports.createBooking = factory.createOne(Booking);
