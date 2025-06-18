@@ -12,17 +12,6 @@ import { showAlert } from './alerts';
 //   window.history.replaceState(null, '', urlWithoutQuery);
 // }
 
-if (window.location.pathname === '/my-tours') {
-  const params = new URLSearchParams(window.location.search);
-  const alertMessage = params.get('alert');
-
-  if (alertMessage === 'payment') {
-    showAlert('success', 'Payment successful!');
-    const cleanURL = window.location.origin + window.location.pathname;
-    window.history.replaceState(null, '', cleanURL);
-  }
-}
-
 export async function bookTour(tourId) {
   try {
     const res = await fetch(`/api/v1/bookings/checkout-session/${tourId}`);

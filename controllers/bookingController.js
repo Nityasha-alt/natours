@@ -31,7 +31,7 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
     order_meta: {
       // `${req.protocol}://${req.get('host')}/my-tours`,
       // return_url: `${req.protocol}://${req.get('host')}/?tour=${tourId}&user=${userId}&price=${price}&alert=payment`,
-      return_url: `${req.protocol}://${req.get('host')}/my-tours?alert=payment`,
+      return_url: `${req.protocol}://${req.get('host')}/my-tours`,
       tour_id: tour.id,
     },
   };
