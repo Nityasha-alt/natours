@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get(
   '/',
-  bookingController.createBookingCheckout, // MUST come before other middlewares
+  // bookingController.createBookingCheckout, // MUST come before other middlewares
   authController.isLoggedIn,
   viewsController.getOverview,
 );

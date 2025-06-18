@@ -1,6 +1,8 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
+const crypto = require('crypto');
 const cashfree = require('../utils/cashfree');
 const Tour = require('../models/tourModel');
+const User = require('../models/userModel');
 const Booking = require('../models/bookingModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -28,7 +30,9 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
     },
     order_meta: {
       // `${req.protocol}://${req.get('host')}/my-tours`,
-      return_url: `${req.protocol}://${req.get('host')}/?tour=${tourId}&user=${userId}&price=${price}&alert=payment`,
+      // return_url: `${req.protocol}://${req.get('host')}/?tour=${tourId}&user=${userId}&price=${price}&alert=payment`,
+      return_url: `${req.protocol}://${req.get('host')}/my-tours`,
+      tour_id: tour.id,
     },
   };
 
@@ -43,24 +47,62 @@ exports.getCheckoutSession = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createBookingCheckout = catchAsync(async (req, res, next) => {
-  // console.log('🔁 Redirected to / with query:', req.query);
-  // console.log('👤 User from cookie/session:', req.user);
+// exports.createBookingCheckout = catchAsync(async (req, res, next) => {
+//   // console.log('🔁 Redirected to / with query:', req.query);
+//   // console.log('👤 User from cookie/session:', req.user);
 
-  const { tour, user, price } = req.query;
-  if (!tour || !user || !price) return next();
+//   const { tour, user, price } = req.query;
+//   if (!tour || !user || !price) return next();
 
-  const existingBooking = await Booking.findOne({ tour, user, price });
-  if (!existingBooking) {
-    await Booking.create({ tour, user, price });
-    console.log('✅ Booking created!');
-  } else {
-    console.log('ℹ️ Booking already exists');
+//   const existingBooking = await Booking.findOne({ tour, user, price });
+//   if (!existingBooking) {
+//     await Booking.create({ tour, user, price });
+//     console.log('✅ Booking created!');
+//   } else {
+//     console.log('ℹ️ Booking already exists');
+//   }
+
+//   // res.redirect(req.originalUrl.split('?')[0]);
+//   res.redirect(`/?alert=payment`);
+// });
+
+const createBookingCheckout = async (order, customerEmail) => {
+  const tourId = order.order_meta.tour_id;
+  const user = (await User.findOne({ email: customerEmail })).id;
+  const price = order.order_amount;
+
+  await Booking.create({ tour: tourId, user, price });
+};
+
+exports.webhookCheckout = async (req, res) => {
+  const signature = req.headers['x-webhook-signature'];
+  const timestamp = req.headers['x-webhook-timestamp'];
+  const secret = process.env.CASHFREE_CLIENT_SECRET;
+
+  const rawBody = req.body.toString('utf8');
+  const signedPayload = timestamp + rawBody;
+
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(signedPayload)
+    .digest('base64');
+
+  if (signature !== expectedSignature) {
+    console.log('❌ Invalid signature.');
+    return res.status(400).send('Signature mismatch');
   }
 
-  // res.redirect(req.originalUrl.split('?')[0]);
-  res.redirect(`/?alert=payment`);
-});
+  const eventData = JSON.parse(rawBody);
+
+  if (eventData.event === 'PAYMENT_SUCCESS_WEBHOOK') {
+    const { order } = eventData.payload;
+    const customerEmail = order.customer_details.customer_email;
+
+    await createBookingCheckout(order, customerEmail);
+  }
+
+  res.status(200).json({ received: true });
+};
 
 exports.createBooking = factory.createOne(Booking);
 exports.getBooking = factory.getOne(Booking);
